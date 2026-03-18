@@ -9,11 +9,14 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 
 from bot.config import config
 from bot.database.models import init_database
+from bot.handlers.briefing import get_briefing_handlers
 from bot.handlers.chat import get_chat_handlers
+from bot.handlers.expense import get_expense_handlers
 from bot.handlers.memo import get_memo_handlers
 from bot.handlers.news import get_news_handlers
 from bot.handlers.reminder import get_reminder_handlers
 from bot.handlers.schedule import get_schedule_handlers
+from bot.handlers.voice import get_voice_handlers
 from bot.handlers.weather import get_weather_handlers
 from bot.services.scheduler import start_scheduler, stop_scheduler
 from bot.utils.helpers import build_help_message
@@ -124,6 +127,16 @@ def main() -> None:
         application.add_handler(handler)
 
     for handler in get_news_handlers():
+        application.add_handler(handler)
+
+    for handler in get_briefing_handlers():
+        application.add_handler(handler)
+
+    for handler in get_expense_handlers():
+        application.add_handler(handler)
+
+    # 음성 메시지 핸들러 등록
+    for handler in get_voice_handlers():
         application.add_handler(handler)
 
     # 채팅 핸들러는 마지막에 등록 (텍스트 메시지 폴백)

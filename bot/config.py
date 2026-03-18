@@ -39,6 +39,11 @@ class Config:
     # 타임존
     TIMEZONE: str = "Asia/Seoul"
 
+    # Google Calendar OAuth2 credentials 파일 경로 (선택 사항)
+    GOOGLE_CALENDAR_CREDENTIALS_PATH: str = os.getenv(
+        "GOOGLE_CALENDAR_CREDENTIALS_PATH", ""
+    )
+
     # 봇 명령어 목록
     BOT_COMMANDS: tuple[tuple[str, str], ...] = (
         ("start", "봇 시작 및 도움말"),
@@ -53,6 +58,11 @@ class Config:
         ("search_memo", "메모 검색"),
         ("weather", "날씨 조회"),
         ("news", "뉴스 요약"),
+        ("briefing_on", "모닝 브리핑 구독"),
+        ("briefing_off", "모닝 브리핑 해제"),
+        ("expense", "지출 기록"),
+        ("expense_today", "오늘 지출 조회"),
+        ("expense_month", "이번 달 지출 요약"),
     )
 
     @classmethod

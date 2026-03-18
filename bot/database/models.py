@@ -48,6 +48,28 @@ CREATE TABLE IF NOT EXISTS chat_history (
 );
 """
 
+# 모닝 브리핑 구독자 테이블
+CREATE_BRIEFING_SUBSCRIBERS_TABLE = """
+CREATE TABLE IF NOT EXISTS briefing_subscribers (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL UNIQUE,
+    is_active   INTEGER NOT NULL DEFAULT 1,
+    created_at  DATETIME DEFAULT (datetime('now', 'localtime'))
+);
+"""
+
+# 지출 기록 테이블
+CREATE_EXPENSES_TABLE = """
+CREATE TABLE IF NOT EXISTS expenses (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL,
+    amount      INTEGER NOT NULL,
+    description TEXT    NOT NULL DEFAULT '',
+    category    TEXT    NOT NULL DEFAULT '기타',
+    created_at  DATETIME DEFAULT (datetime('now', 'localtime'))
+);
+"""
+
 # 인덱스
 CREATE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_schedules_user ON schedules(user_id);",
@@ -55,6 +77,9 @@ CREATE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_reminders_sent ON reminders(is_sent, remind_at);",
     "CREATE INDEX IF NOT EXISTS idx_memos_user ON memos(user_id);",
     "CREATE INDEX IF NOT EXISTS idx_chat_user ON chat_history(user_id);",
+    "CREATE INDEX IF NOT EXISTS idx_briefing_user ON briefing_subscribers(user_id);",
+    "CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses(user_id);",
+    "CREATE INDEX IF NOT EXISTS idx_expenses_created ON expenses(user_id, created_at);",
 ]
 
 
@@ -72,6 +97,8 @@ async def init_database() -> None:
         await db.execute(CREATE_REMINDERS_TABLE)
         await db.execute(CREATE_MEMOS_TABLE)
         await db.execute(CREATE_CHAT_HISTORY_TABLE)
+        await db.execute(CREATE_BRIEFING_SUBSCRIBERS_TABLE)
+        await db.execute(CREATE_EXPENSES_TABLE)
         for idx_sql in CREATE_INDEXES:
             await db.execute(idx_sql)
         await db.commit()

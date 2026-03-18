@@ -215,3 +215,117 @@ async def clear_chat_history(user_id: int) -> None:
             (user_id,),
         )
         await db.commit()
+
+
+# ─────────────────────────────────────────────
+# 브리핑 구독자 (Briefing Subscribers)
+# ─────────────────────────────────────────────
+
+async def subscribe_briefing(user_id: int) -> None:
+    """모닝 브리핑 구독 등록 또는 활성화"""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        await db.execute(
+            """
+            INSERT INTO briefing_subscribers (user_id, is_active)
+            VALUES (?, 1)
+            ON CONFLICT(user_id) DO UPDATE SET is_active=1
+            """,
+            (user_id,),
+        )
+        await db.commit()
+
+
+async def unsubscribe_briefing(user_id: int) -> None:
+    """모닝 브리핑 구독 비활성화"""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        await db.execute(
+            "UPDATE briefing_subscribers SET is_active=0 WHERE user_id=?",
+            (user_id,),
+        )
+        await db.commit()
+
+
+async def get_briefing_subscribers() -> list[int]:
+    """활성 구독자의 user_id 목록 반환"""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT user_id FROM briefing_subscribers WHERE is_active=1"
+        )
+        rows = await cursor.fetchall()
+        return [row["user_id"] for row in rows]
+
+
+async def is_briefing_subscribed(user_id: int) -> bool:
+    """해당 유저의 브리핑 구독 여부 확인"""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        cursor = await db.execute(
+            "SELECT is_active FROM briefing_subscribers WHERE user_id=?",
+            (user_id,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return False
+        return bool(row[0])
+
+
+# ─────────────────────────────────────────────
+# 지출 기록 (Expenses)
+# ─────────────────────────────────────────────
+
+async def add_expense(
+    user_id: int, amount: int, description: str, category: str = "기타"
+) -> int:
+    """지출 추가. 생성된 row id 반환"""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        cursor = await db.execute(
+            "INSERT INTO expenses (user_id, amount, description, category) VALUES (?, ?, ?, ?)",
+            (user_id, amount, description, category),
+        )
+        await db.commit()
+        return cursor.lastrowid  # type: ignore[return-value]
+
+
+async def get_expenses_today(user_id: int) -> list[dict[str, Any]]:
+    """오늘 지출 목록 반환"""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            """
+            SELECT * FROM expenses
+            WHERE user_id=?
+              AND date(created_at) = date('now', 'localtime')
+            ORDER BY created_at ASC
+            """,
+            (user_id,),
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+
+async def get_expenses_this_month(user_id: int) -> list[dict[str, Any]]:
+    """이번 달 지출 목록 반환"""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            """
+            SELECT * FROM expenses
+            WHERE user_id=?
+              AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now', 'localtime')
+            ORDER BY created_at ASC
+            """,
+            (user_id,),
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+
+async def delete_expense(expense_id: int, user_id: int) -> bool:
+    """지출 기록 삭제. 성공 여부 반환"""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        cursor = await db.execute(
+            "DELETE FROM expenses WHERE id=? AND user_id=?",
+            (expense_id, user_id),
+        )
+        await db.commit()
+        return cursor.rowcount > 0
