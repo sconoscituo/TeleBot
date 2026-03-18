@@ -1,0 +1,20 @@
+services:
+  telebot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: personal-ai-telebot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # SQLite DB 영속화
+      - ./data:/app/data
+    environment:
+      - TZ=Asia/Seoul
+      - DATABASE_PATH=data/assistant.db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
