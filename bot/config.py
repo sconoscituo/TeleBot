@@ -63,6 +63,9 @@ class Config:
         ("expense", "지출 기록"),
         ("expense_today", "오늘 지출 조회"),
         ("expense_month", "이번 달 지출 요약"),
+        ("stock", "주식 시세 조회 /stock AAPL"),
+        ("crypto", "암호화폐 시세 /crypto BTC"),
+        ("translate", "AI 번역 /translate 텍스트"),
     )
 
     @classmethod
